@@ -92,13 +92,13 @@ class Generator
     if Thread.current != @loop_thread
       raise "should be called in Generator.new{|g| ... }"
     end
-    Thread.critical = true
+    Thread.critical = true if Thread.respond_to? :critical
     begin
       @queue << value
       @main_thread.wakeup
       Thread.stop
     ensure
-      Thread.critical = false
+      Thread.critical = true if Thread.respond_to? :critical
     end
     self
   end
@@ -109,7 +109,7 @@ class Generator
       if @main_thread
         raise "should not be called in Generator.new{|g| ... }"
       end
-      Thread.critical = true
+      Thread.critical = true if Thread.respond_to? :critical
       begin
         @main_thread = Thread.current
         @loop_thread.wakeup
@@ -118,7 +118,7 @@ class Generator
         # ignore
       ensure
         @main_thread = nil
-        Thread.critical = false
+        Thread.critical = false if Thread.respond_to? :critical
       end
     end
     @queue.empty?

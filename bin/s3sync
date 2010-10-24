@@ -11,7 +11,7 @@
 module S3sync
 
   $S3SYNC_MIME_TYPES_FILE = (ENV["S3SYNC_MIME_TYPES_FILE"] or '/etc/mime.types')
-  $S3SYNC_VERSION = '1.3.0'
+  $S3SYNC_VERSION = '1.3.1'
 
   # always look "here" for include files (thanks aktxyz)
   $LOAD_PATH << File.join(File.expand_path(File.dirname(__FILE__)), "../lib/")
@@ -19,7 +19,7 @@ module S3sync
   require 'getoptlong'
   #require 'generator' # http://www.ruby-doc.org/stdlib/libdoc/generator/rdoc/classes/Generator.html
   require 's3sync/thread_generator' # memory doesn't leak with this one, at least nothing near as bad
-  require 'md5'
+  require 'digest/md5'
   require 'tempfile'
 
   require 's3sync'
@@ -63,6 +63,8 @@ module S3sync
                                    [ '--expires',        GetoptLong::REQUIRED_ARGUMENT ],
                                    [ '--cache-control',  GetoptLong::REQUIRED_ARGUMENT ],
                                    [ '--exclude',        GetoptLong::REQUIRED_ARGUMENT ],
+                                   [ '--key', '-k',        GetoptLong::REQUIRED_ARGUMENT],
+                                   [ '--secret',     GetoptLong::REQUIRED_ARGUMENT],
                                    [ '--make-dirs',	GetoptLong::NO_ARGUMENT ],
                                    [ '--no-md5',	GetoptLong::NO_ARGUMENT ]           
                                    )
@@ -70,13 +72,14 @@ module S3sync
     def S3sync.usage(message = nil)
       $stderr.puts message if message
       name = $0.split('/').last
-      $stderr.puts <<"ENDUSAGE"
+      $stderr.puts <<-ENDUSAGE
 #{name} [options] <source> <destination>\t\tversion #{$S3SYNC_VERSION}
   --help    -h          --verbose     -v     --dryrun    -n	
   --ssl     -s          --recursive   -r     --delete
   --public-read -p      --expires="<exp>"    --cache-control="<cc>"
   --exclude="<regexp>"  --progress           --debug   -d
-  --make-dirs           --no-md5
+  --key     -k          --secret      -s     --make-dirs           
+  --no-md5
 One of <source> or <destination> must be of S3 format, the other a local path.
 Reminders:
 * An S3 formatted item with bucket 'mybucket' and prefix 'mypre' looks like:
@@ -96,6 +99,14 @@ ENDUSAGE
     usage if $S3syncOptions['--help']
     $S3syncOptions['--verbose'] = true if $S3syncOptions['--dryrun'] or $S3syncOptions['--debug'] or $S3syncOptions['--progress']
     $S3syncOptions['--ssl'] = true if $S3syncOptions['--ssl'] # change from "" to true to appease s3 port chooser
+
+    if $S3syncOptions['--key']
+      $AWS_ACCESS_KEY_ID = $S3syncOptions['--key']
+    end
+    
+    if $S3syncOptions['--secret']
+      $AWS_SECRET_ACCESS_KEY = $S3syncOptions['--secret']
+    end
 
     # ---------- CONNECT ---------- #
     S3sync::s3trySetup 
@@ -206,7 +217,7 @@ ENDUSAGE
             end
           end
         end
-        dItems = d.collect + toAdd
+        dItems = d.collect.to_a + toAdd
         d.close
         d = toAdd = nil
         dItems.sort! #aws says we will get alpha sorted results but ruby doesn't

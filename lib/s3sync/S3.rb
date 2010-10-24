@@ -46,7 +46,7 @@ module S3
           lk == 'content-type' or
           lk == 'date' or
           lk =~ /^#{AMAZON_HEADER_PREFIX}/o)
-        interesting_headers[lk] = value.to_s.strip
+        interesting_headers[lk] = value.join.strip
       end
     end
 

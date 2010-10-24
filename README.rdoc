@@ -1,6 +1,13 @@
-= s3sync
 
-* http://github.com/mitchc2/s3sync
+== CHANGED from original to be compatible with 1.9.2
+* require 'md5' 
+Instead require "digest/md5"
+* Thread.critical
+Thread.critical is not used since 1.9
+* Dir#collect 
+In 1.9.2 Dir#collect is not Array but Enumerator
+* Array#to_s
+The result of [1,2].to_s is different from 1.8. Instead of to_s, used join
 
 == DESCRIPTION:
 
@@ -233,7 +240,7 @@ advanced option.
 
 == INSTALL:
 
-sudo gem install s3sync
+sudo gem install aproxacs-s3sync
 
 
 Your environment:
