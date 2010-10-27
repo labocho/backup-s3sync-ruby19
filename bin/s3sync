@@ -17,8 +17,12 @@ module S3sync
   $LOAD_PATH << File.join(File.expand_path(File.dirname(__FILE__)), "../lib/")
 
   require 'getoptlong'
-  #require 'generator' # http://www.ruby-doc.org/stdlib/libdoc/generator/rdoc/classes/Generator.html
-  require 's3sync/thread_generator' # memory doesn't leak with this one, at least nothing near as bad
+  # require 'generator' # http://www.ruby-doc.org/stdlib/libdoc/generator/rdoc/classes/Generator.html
+  unless defined?(Enumerator)
+    require "enumerator"
+    Enumerator = Enumerable::Enumerator
+  end
+  # require 's3sync/thread_generator' # memory doesn't leak with this one, at least nothing near as bad
   require 'digest/md5'
   require 'tempfile'
 
@@ -171,7 +175,7 @@ ENDUSAGE
 
     # a generator that will return the files/dirs of the local tree one by one
     # sorted and decorated for easy comparison with the S3 tree
-    localTree = Generator.new do |g|
+    localTree = Enumerator.new do |g|
       def S3sync.localTreeRecurse(g, prefix, path)
         debug("localTreeRecurse #{prefix} #{path}")
         #if $S3syncOptions['--memory']
@@ -267,7 +271,7 @@ ENDUSAGE
     
     # a generator that will return the nodes in the S3 tree one by one
     # sorted and decorated for easy comparison with the local tree
-    s3Tree = Generator.new do |g|
+    s3Tree = Enumerator.new do |g|
       def S3sync.s3TreeRecurse(g, bucket, prefix, path)
         if $S3syncOptions['--memory']
           $stderr.puts "Starting S3 recurse"
@@ -361,8 +365,8 @@ ENDUSAGE
     # run the comparison engine and act according to what we find for each check
     nodesToDelete = Array.new # a stack. have to delete in reverse order of normal create/update processing
 
-    sourceNode = sourceTree.next? ? sourceTree.next : nil
-    destinationNode = destinationTree.next? ? destinationTree.next : nil
+    sourceNode = sourceTree.next rescue nil
+    destinationNode = destinationTree.next rescue nil
     while sourceNode or destinationNode do
       debug("source: #{sourceNode.name}") if sourceNode
       debug("dest: #{destinationNode.name}") if destinationNode
@@ -395,8 +399,8 @@ ENDUSAGE
         elsif $S3syncOptions['--debug']
           $stderr.puts "Node #{sourceNode.name} unchanged" 
         end
-        sourceNode = sourceTree.next? ? sourceTree.next : nil
-        destinationNode = destinationTree.next? ? destinationTree.next : nil
+        sourceNode = sourceNode.nil? ? nil : sourceTree.next rescue nil
+        destinationNode = destinationNode.nil? ? nil : destinationTree.next rescue nil
       end
     end
 
