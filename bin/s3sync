@@ -379,7 +379,7 @@ ENDUSAGE
           end
         puts "Create node #{sourceNode.name}" if $S3syncOptions['--verbose']
         dNode.updateFrom(sourceNode) unless $S3syncOptions['--dryrun']
-        sourceNode = sourceTree.next? ? sourceTree.next : nil
+        sourceNode = sourceNode.nil? ? nil : sourceTree.next rescue nil
       elsif (!sourceNode) or (destinationNode and (sourceNode.name > destinationNode.name))
         $stderr.puts "Source does not have #{destinationNode.name}" if $S3syncOptions['--debug']
         if $S3syncOptions['--delete']
@@ -391,7 +391,7 @@ ENDUSAGE
             destinationNode.delete unless $S3syncOptions['--dryrun']
           end
         end
-        destinationNode = destinationTree.next? ? destinationTree.next : nil
+        destinationNode = destinationNode.nil? ? nil : destinationTree.next rescue nil
       elsif sourceNode.name == destinationNode.name
         if (sourceNode.size != destinationNode.size) or (($S3syncOptions['--no-md5'])? (sourceNode.date > destinationNode.date) : (sourceNode.tag != destinationNode.tag))
           puts "Update node #{sourceNode.name}" if $S3syncOptions['--verbose']
