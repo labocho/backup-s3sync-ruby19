@@ -61,13 +61,13 @@ module S3sync
                                    [ '--delete',			GetoptLong::NO_ARGUMENT ],
                                    [ '--verbose', '-v',	GetoptLong::NO_ARGUMENT ],
                                    [ '--dryrun',  '-n',	GetoptLong::NO_ARGUMENT ], 
-                                   [ '--gzip',      	GetoptLong::NO_ARGUMENT ], 
                                    [ '--debug',   '-d',	GetoptLong::NO_ARGUMENT ],
                                    [ '--memory',   '-m',	GetoptLong::NO_ARGUMENT ],
                                    [ '--progress',	GetoptLong::NO_ARGUMENT ],
                                    [ '--expires',        GetoptLong::REQUIRED_ARGUMENT ],
                                    [ '--cache-control',  GetoptLong::REQUIRED_ARGUMENT ],
                                    [ '--exclude',        GetoptLong::REQUIRED_ARGUMENT ],
+                                   [ '--gzip',      	GetoptLong::REQUIRED_ARGUMENT ], 
                                    [ '--key', '-k',        GetoptLong::REQUIRED_ARGUMENT],
                                    [ '--secret',     GetoptLong::REQUIRED_ARGUMENT],
                                    [ '--make-dirs',	GetoptLong::NO_ARGUMENT ],
@@ -507,10 +507,9 @@ ENDUSAGE
           headers['x-amz-acl'] = 'public-read' if $S3syncOptions['--public-read']
           headers['Expires'] = $S3syncOptions['--expires'] if $S3syncOptions['--expires']
           headers['Cache-Control'] = $S3syncOptions['--cache-control'] if $S3syncOptions['--cache-control']
-          headers['Content-Encoding'] = "gzip" if $S3syncOptions['--gzip']
           fType = @path.split('.').last
-          if fType == "gz"
-            headers['Content-Encoding'] = "gzip"
+          if $S3syncOptions['--gzip'].split(",").include? fType
+            headers['Content-Encoding'] = "gzip" 
             fType = @path.split('.')[-2]
           end
           debug("File extension: #{fType}")
