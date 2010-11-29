@@ -8,6 +8,7 @@ Thread.critical is not used since 1.9
 In 1.9.2 Dir#collect is not Array but Enumerator
 * Array#to_s
 The result of [1,2].to_s is different from 1.8. Instead of to_s, used join
+* use Enumerator instead of thread_generator
 
 == DESCRIPTION:
 

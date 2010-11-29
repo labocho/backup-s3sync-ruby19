@@ -61,6 +61,7 @@ module S3sync
                                    [ '--delete',			GetoptLong::NO_ARGUMENT ],
                                    [ '--verbose', '-v',	GetoptLong::NO_ARGUMENT ],
                                    [ '--dryrun',  '-n',	GetoptLong::NO_ARGUMENT ], 
+                                   [ '--gzip',      	GetoptLong::NO_ARGUMENT ], 
                                    [ '--debug',   '-d',	GetoptLong::NO_ARGUMENT ],
                                    [ '--memory',   '-m',	GetoptLong::NO_ARGUMENT ],
                                    [ '--progress',	GetoptLong::NO_ARGUMENT ],
@@ -83,7 +84,7 @@ module S3sync
   --public-read -p      --expires="<exp>"    --cache-control="<cc>"
   --exclude="<regexp>"  --progress           --debug   -d
   --key     -k          --secret      -s     --make-dirs           
-  --no-md5
+  --no-md5  --gzip
 One of <source> or <destination> must be of S3 format, the other a local path.
 Reminders:
 * An S3 formatted item with bucket 'mybucket' and prefix 'mypre' looks like:
@@ -506,7 +507,12 @@ ENDUSAGE
           headers['x-amz-acl'] = 'public-read' if $S3syncOptions['--public-read']
           headers['Expires'] = $S3syncOptions['--expires'] if $S3syncOptions['--expires']
           headers['Cache-Control'] = $S3syncOptions['--cache-control'] if $S3syncOptions['--cache-control']
+          headers['Content-Encoding'] = "gzip" if $S3syncOptions['--gzip']
           fType = @path.split('.').last
+          if fType == "gz"
+            headers['Content-Encoding'] = "gzip"
+            fType = @path.split('.')[-2]
+          end
           debug("File extension: #{fType}")
           if defined?($mimeTypes) and fType != '' and (mType = $mimeTypes[fType]) and mType != ''
             debug("Mime type: #{mType}")
