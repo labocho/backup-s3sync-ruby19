@@ -508,7 +508,7 @@ ENDUSAGE
           headers['Expires'] = $S3syncOptions['--expires'] if $S3syncOptions['--expires']
           headers['Cache-Control'] = $S3syncOptions['--cache-control'] if $S3syncOptions['--cache-control']
           fType = @path.split('.').last
-          if $S3syncOptions['--gzip'].split(",").include? fType
+          if ($S3syncOptions['--gzip'] || "gz").split(",").include? fType
             headers['Content-Encoding'] = "gzip" 
             fType = @path.split('.')[-2]
           end
